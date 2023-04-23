@@ -5,6 +5,7 @@ using cr_auth.Models.ModelIngest;
 using cr_auth.Services;
 using cr_auth.Services.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,8 +16,10 @@ using System.Text;
 
 namespace cr_auth.Controllers
 {
+	
 	[ApiController]
 	[Route("")]
+	[EnableCors("Cors")]
 	public class AuthController : ControllerBase
 	{
 		private readonly DataContext _context;
@@ -34,33 +37,35 @@ namespace cr_auth.Controllers
 			_jwtService = jwtService;
 		}
 
-		[HttpGet()]
-		public async Task<ActionResult<Object>> Get()
-		{
-			return Ok(new { result = "Ok!" });
-		}
-
-		[Authorize(Roles = "admin")]
-		[HttpPost("create-user-type")]
-		public async Task<ActionResult<Object>> CreateUserType()
-		{
-			return Ok(new { result = "Ok!" });
-		}
-		[Authorize(Roles = "admin")]
+		//[HttpGet()]
+		//public async Task<ActionResult<Object>> Get()
+		//{
+		//	return Ok(new { result = "Ok!" });
+		//}
+		[Authorize(Roles = "superuser,admin")]
 		[HttpPost("create-user")]
 		public async Task<ActionResult<Object>> CreateUser(UserCreateIngest user)
 		{
 			_userService.CreateUser(_context, user);
 			return Ok();
 		}
-
-		[HttpPost()]
-		public async Task<ActionResult<Object>> Login(LoginIngest login)
+		[AllowAnonymous]
+		[HttpPost]
+		public async Task<ActionResult<object>> Login([FromBody]LoginIngest login)
 		{
 
 			var user = await _userService.ValidateUserInfo(_context, login);
 			var stringToken = _jwtService.GenerateToken(user);
-			return Ok(stringToken);
+			var opts = new CookieOptions
+			{
+				SameSite = SameSiteMode.None,
+				Secure = true
+			};
+			
+			Response.Cookies.Append("oauth", stringToken, opts);
+				
+			
+			return Ok();
 		}
 	}
 }

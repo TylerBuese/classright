@@ -1,10 +1,7 @@
-using cr_auth.Data;
-using cr_auth.Errors;
-using cr_auth.Services;
-using cr_auth.Services.Authentication;
+using cr_quiz.Data;
+using cr_quiz.Errors;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -32,9 +29,10 @@ builder.Services.AddAuthentication(options =>
 		ValidateAudience = true,
 		ValidateLifetime = false,
 		ValidateIssuerSigningKey = true,
+
 	};
-	
-	
+
+
 });
 
 builder.Services.AddCors(options =>
@@ -55,8 +53,6 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IJwtService, JwtService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<DataContext>(o => o.UseNpgsql(configuration.GetValue<String>("ConnectionStrings:dev")));
@@ -70,8 +66,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("Cors");
 //Authentication needs to come firt
 app.UseAuthentication();
 
@@ -80,5 +74,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseMiddleware<GlobalErrorHandler>();
+
 
 app.Run();

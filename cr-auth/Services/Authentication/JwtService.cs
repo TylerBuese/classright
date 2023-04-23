@@ -20,7 +20,7 @@ namespace cr_auth.Services.Authentication
 			var issuer = _configuration["Jwt:Issuer"];
 			var audience = _configuration["Jwt:Audience"];
 			var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
-
+			
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Subject = new ClaimsIdentity(new[]
@@ -29,8 +29,6 @@ namespace cr_auth.Services.Authentication
 				new Claim(JwtRegisteredClaimNames.Sub, user.Username),
 				new Claim(JwtRegisteredClaimNames.Email, user.Email),
 				new Claim(JwtRegisteredClaimNames.NameId, user.Id),
-				new Claim(ClaimTypes.Role, "admin"),
-				new Claim(ClaimTypes.Role, "case"),
 				new Claim(JwtRegisteredClaimNames.Jti,
 				Guid.NewGuid().ToString()),
 				
@@ -41,9 +39,13 @@ namespace cr_auth.Services.Authentication
 				SigningCredentials = new SigningCredentials
 				(new SymmetricSecurityKey(key),
 				SecurityAlgorithms.HmacSha256),
-				
-
 			};
+			
+			foreach (var role in user.Roles)
+			{
+				tokenDescriptor.Subject.AddClaim(new Claim(ClaimTypes.Role, role.ToString().ToLower()));
+			}
+			
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var token = tokenHandler.CreateToken(tokenDescriptor);
 			var stringToken = tokenHandler.WriteToken(token);
